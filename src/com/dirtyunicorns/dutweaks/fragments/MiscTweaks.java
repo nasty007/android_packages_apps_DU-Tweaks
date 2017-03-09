@@ -44,6 +44,7 @@ public class MiscTweaks extends SettingsPreferenceFragment implements OnPreferen
     private static final String PREF_MEDIA_SCANNER_ON_BOOT = "media_scanner_on_boot";
     private static final String SCREENSHOT_DELAY = "screenshot_delay";
     private static final String WIRED_RINGTONE_FOCUS_MODE = "wired_ringtone_focus_mode";
+    private static final String PREF_STATUS_BAR_WEATHER = "status_bar_weather";
 
 
     private CustomSeekBarPreference mScreenshotDelay;
@@ -52,6 +53,7 @@ public class MiscTweaks extends SettingsPreferenceFragment implements OnPreferen
     private ListPreference mScrollingCachePref;
     private ListPreference mMsob;
     private ListPreference mWiredHeadsetRingtoneFocus;
+    private ListPreference mStatusBarWeather;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -70,6 +72,19 @@ public class MiscTweaks extends SettingsPreferenceFragment implements OnPreferen
             mFlashlightNotification.setChecked((Settings.System.getInt(resolver,
                     Settings.System.FLASHLIGHT_NOTIFICATION, 0) == 1));
         }
+
+            // Status bar weather
+            mStatusBarWeather = (ListPreference) findPreference(PREF_STATUS_BAR_WEATHER);
+            int temperatureShow = Settings.System.getIntForUser(resolver,
+                    Settings.System.STATUS_BAR_SHOW_WEATHER_TEMP, 0,
+                    UserHandle.USER_CURRENT);
+            mStatusBarWeather.setValue(String.valueOf(temperatureShow));
+            if (temperatureShow == 0) {
+                mStatusBarWeather.setSummary(R.string.statusbar_weather_summary);
+            } else {
+                mStatusBarWeather.setSummary(mStatusBarWeather.getEntry());
+            }
+            mStatusBarWeather.setOnPreferenceChangeListener(this);
 
         mMsob = (ListPreference) findPreference(PREF_MEDIA_SCANNER_ON_BOOT);
         mMsob.setValue(String.valueOf(Settings.System.getInt(resolver,
@@ -154,6 +169,19 @@ public class MiscTweaks extends SettingsPreferenceFragment implements OnPreferen
             Settings.Global.putInt(resolver, Settings.Global.WIRED_RINGTONE_FOCUS_MODE,
                     mWiredHeadsetRingtoneFocusValue);
             return true;
+            } else if (preference == mStatusBarWeather) {
+                int temperatureShow = Integer.valueOf((String) newValue);
+                int index = mStatusBarWeather.findIndexOfValue((String) newValue);
+                Settings.System.putIntForUser(resolver,
+                        Settings.System.STATUS_BAR_SHOW_WEATHER_TEMP,
+                        temperatureShow, UserHandle.USER_CURRENT);
+                if (temperatureShow == 0) {
+                    mStatusBarWeather.setSummary(R.string.statusbar_weather_summary);
+                } else {
+                    mStatusBarWeather.setSummary(
+                            mStatusBarWeather.getEntries()[index]);
+                }
+                return true;
         }
         return false;
     }
