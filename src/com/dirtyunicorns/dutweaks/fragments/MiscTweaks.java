@@ -36,6 +36,7 @@ import com.dirtyunicorns.dutweaks.preference.CustomSeekBarPreference;
 
 public class MiscTweaks extends SettingsPreferenceFragment implements OnPreferenceChangeListener {
 
+    private static final String PREF_STATUS_BAR_WEATHER = "status_bar_weather";
     private static final String FLASHLIGHT_NOTIFICATION = "flashlight_notification";
     private static final String HEADSET_CONNECT_PLAYER = "headset_connect_player";
     private static final String SCREENSHOT_TYPE = "screenshot_type";
@@ -47,6 +48,7 @@ public class MiscTweaks extends SettingsPreferenceFragment implements OnPreferen
     private static final String WIRED_RINGTONE_FOCUS_MODE = "wired_ringtone_focus_mode";
 
 
+    private ListPreference mStatusBarWeather;
     private CustomSeekBarPreference mScreenshotDelay;
     private SwitchPreference mFlashlightNotification;
     private ListPreference mLaunchPlayerHeadsetConnection;
@@ -63,6 +65,19 @@ public class MiscTweaks extends SettingsPreferenceFragment implements OnPreferen
 
         final ContentResolver resolver = getActivity().getContentResolver();
         final PreferenceScreen prefScreen = getPreferenceScreen();
+
+            // Status bar weather
+            mStatusBarWeather = (ListPreference) findPreference(PREF_STATUS_BAR_WEATHER);
+            int temperatureShow = Settings.System.getIntForUser(resolver,
+                    Settings.System.STATUS_BAR_SHOW_WEATHER_TEMP, 0,
+                    UserHandle.USER_CURRENT);
+            mStatusBarWeather.setValue(String.valueOf(temperatureShow));
+            if (temperatureShow == 0) {
+                mStatusBarWeather.setSummary(R.string.statusbar_weather_summary);
+            } else {
+                mStatusBarWeather.setSummary(mStatusBarWeather.getEntry());
+            }
+            mStatusBarWeather.setOnPreferenceChangeListener(this);
 
         mFlashlightNotification = (SwitchPreference) findPreference(FLASHLIGHT_NOTIFICATION);
         mFlashlightNotification.setOnPreferenceChangeListener(this);
@@ -130,6 +145,19 @@ public class MiscTweaks extends SettingsPreferenceFragment implements OnPreferen
             Settings.System.putInt(resolver,
                     Settings.System.FLASHLIGHT_NOTIFICATION, checked ? 1:0);
             return true;
+            } else if (preference == mStatusBarWeather) {
+                int temperatureShow = Integer.valueOf((String) newValue);
+                int index = mStatusBarWeather.findIndexOfValue((String) newValue);
+                Settings.System.putIntForUser(resolver,
+                        Settings.System.STATUS_BAR_SHOW_WEATHER_TEMP,
+                        temperatureShow, UserHandle.USER_CURRENT);
+                if (temperatureShow == 0) {
+                    mStatusBarWeather.setSummary(R.string.statusbar_weather_summary);
+                } else {
+                    mStatusBarWeather.setSummary(
+                            mStatusBarWeather.getEntries()[index]);
+                }
+                return true;
         } else if (preference == mScrollingCachePref) {
             if (newValue != null) {
                 SystemProperties.set(SCROLLINGCACHE_PERSIST_PROP, (String)newValue);
